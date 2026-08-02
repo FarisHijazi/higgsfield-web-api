@@ -77,3 +77,38 @@ def test_create_rejects_bad_batch_size():
 def test_turnstile_message_is_actionable():
     msg = str(TurnstileRequired())
     assert "bootstrap" in msg and "higgsfield.ai" in msg
+
+
+# ---- use_unlim defaults to True everywhere (free generation) ---------------
+def test_client_create_defaults_to_unlimited():
+    import inspect
+
+    sig = inspect.signature(HiggsfieldClient.create)
+    assert sig.parameters["use_unlim"].default is True
+
+
+def test_create_sends_use_unlim_in_body_and_params():
+    sent = {}
+
+    hf = HiggsfieldClient.__new__(HiggsfieldClient)
+    hf.auth = _FakeAuth()
+    hf._resolve_references = lambda refs: []
+    hf._request = lambda method, path, **kw: sent.update(kw.get("json", {})) or {"job_sets": []}
+
+    hf.create("p")  # no use_unlim passed -> must default to the free path
+    assert sent["use_unlim"] is True
+    assert sent["params"]["use_unlim"] is True
+
+
+def test_server_request_defaults_to_unlimited():
+    from higgsfield_api.server import GenerateRequest
+
+    assert GenerateRequest(prompt="p").use_unlim is True
+
+
+def test_cli_defaults_to_unlimited_and_opts_out_explicitly():
+    from higgsfield_api.cli import build_parser
+
+    p = build_parser()
+    assert p.parse_args(["generate", "create", "--prompt", "p"]).no_unlim is False
+    assert p.parse_args(["generate", "create", "--prompt", "p", "--no-unlim"]).no_unlim is True

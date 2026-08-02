@@ -110,9 +110,9 @@ def generate(req: GenerateRequest) -> dict:
               seed=req.seed, style_id=req.style_id, extra_params=req.extra_params)
     if not req.wait:
         resp = hf.create(req.prompt, req.model, **kw)
-        return {"job_ids": hf.job_ids(resp), "waited": False}
+        return {"job_ids": hf.job_ids(resp), "waited": False, "use_unlim": req.use_unlim}
     results = hf.generate(req.prompt, req.model, timeout=req.timeout, **kw)
-    return {"results": results, "waited": True}
+    return {"results": results, "waited": True, "use_unlim": req.use_unlim}
 
 
 @app.get("/v1/jobs")

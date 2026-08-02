@@ -82,7 +82,8 @@ def cmd_create(a) -> int:
     )
     job_ids = hf.job_ids(resp)
     balance = (resp.get("wallet") or {}).get("credits_balance")
-    print(f"created {len(job_ids)} job(s) on {a.model}"
+    mode = "SPENDING CREDITS" if a.no_unlim else "unlimited (free)"
+    print(f"created {len(job_ids)} job(s) on {a.model} | {mode}"
           + (f" | credits {balance}" if balance is not None else ""))
     for jid in job_ids:
         print("  ", jid)
@@ -191,7 +192,8 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--style-id")
     c.add_argument("--extra-params", help="JSON of extra model params")
     c.add_argument("--no-unlim", action="store_true",
-                   help="disable the free 'unlimited' path (spends credits)")
+                   help="opt OUT of the free 'unlimited' path and spend credits instead "
+                        "(use_unlim defaults to true)")
     c.add_argument("--wait", action="store_true", help="block until finished")
     c.add_argument("--wait-timeout", type=float, default=300.0)
     c.add_argument("-o", "--output", help="save the image(s) here (file or directory)")

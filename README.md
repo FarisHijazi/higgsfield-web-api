@@ -131,6 +131,31 @@ The gateway sits behind **Cloudflare + DataDome**, so requests are made with
 fingerprint and carrying the browser's `cf_clearance` / `datadome` cookies. A plain
 `requests`/`httpx` call is rejected with a challenge page.
 
+## How long does it take?
+
+Free (`use_unlim`) jobs go into a **shared queue**, and the queue — not the model — is what
+you actually wait on. Measured on `nano_banana`:
+
+| phase | time |
+|---|---|
+| upload a reference | 2–20 s (once; reuse the id afterwards) |
+| create call | < 1 s |
+| **queued** | **15 s – 8 min**, entirely load-dependent |
+| generating (`in_progress`) | ~10–15 s |
+| download | ~1 s |
+
+Observed the same day: **~15–30 s end-to-end when quiet, ~500 s when busy.** So budget a few
+minutes, and don't read a long `queued` as a hang. `--wait` prints the status every 15 s;
+the default `--wait-timeout` is 900 s.
+
+For batches, don't block: create everything first, then collect.
+
+```bash
+higgsfield-web-api-cli generate create nano_banana --prompt "..." --image ref.png   # returns a job id
+higgsfield-web-api-cli generate get  <job_id>          # check later
+higgsfield-web-api-cli generate wait <job_id> -o out.png
+```
+
 ## Known limits
 
 - **Human verification (`turnstile_required`).** Generating too fast trips an anti-bot gate

@@ -56,6 +56,12 @@ Riyadh cafe, candid vertical smartphone photo, natural window light" \
 Verified: identity, clothing and styling carry over faithfully — this is a working
 replacement for Higgsfield img2img persona shots at **zero credit cost**.
 
+**Timing — free jobs QUEUE.** Generation itself is ~10–15 s, but the queue dominates:
+measured **~15–30 s end-to-end when quiet, up to ~8 min when busy** (one run: 480 s queued,
+10 s generating). `--wait` prints status every 15 s; `--wait-timeout` defaults to 900 s. A
+long `queued` is normal, **not** a hang. For batches, create all jobs first (no `--wait`),
+then collect them with `generate get`/`generate wait` — don't serialise on each image.
+
 Reuse an already-uploaded reference by id (no re-upload):
 
 ```bash

@@ -180,9 +180,16 @@ class HiggsfieldClient:
     def list_jobs(self, limit: int = 20) -> list[dict]:
         return (self._request("GET", "/fnf/jobs", params={"limit": limit}) or {}).get("jobs", [])
 
-    def wait(self, job_id: str, timeout: float = 300.0, interval: float = 2.0) -> dict:
-        """Poll a job until it reaches a terminal state or times out."""
-        deadline = time.monotonic() + timeout
+    def wait(self, job_id: str, timeout: float = 900.0, interval: float = 3.0,
+             on_progress: "callable | None" = None) -> dict:
+        """Poll a job until it reaches a terminal state or times out.
+
+        Free (`use_unlim`) jobs sit in a shared queue, so this can legitimately take
+        several minutes — `on_progress(status, elapsed)` is called each poll so callers
+        can show that it is queued rather than hung.
+        """
+        start = time.monotonic()
+        deadline = start + timeout
         while True:
             job = self.get(job_id)
             status = job.get("status")
@@ -191,7 +198,11 @@ class HiggsfieldClient:
                     raise HiggsfieldError(f"job {job_id} ended as '{status}'")
                 return job
             if time.monotonic() >= deadline:
-                raise HiggsfieldError(f"job {job_id} still '{status}' after {timeout}s")
+                raise HiggsfieldError(
+                    f"job {job_id} still '{status}' after {timeout:.0f}s — free jobs queue; "
+                    f"raise --wait-timeout, or poll later with `generate get {job_id}`")
+            if on_progress:
+                on_progress(status, time.monotonic() - start)
             time.sleep(interval)
 
     @staticmethod
@@ -228,7 +239,7 @@ class HiggsfieldClient:
         prompt: str,
         model: str = DEFAULT_MODEL,
         *,
-        timeout: float = 300.0,
+        timeout: float = 900.0,
         **kw,
     ) -> list[dict]:
         """Create + wait for every job in the batch.

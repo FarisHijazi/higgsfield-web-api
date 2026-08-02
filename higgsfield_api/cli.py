@@ -90,9 +90,18 @@ def cmd_create(a) -> int:
     if not a.wait:
         _emit({"job_ids": job_ids}, a.json)
         return 0
+    last = [0.0]
+
+    def _tick(status, elapsed):
+        # free jobs queue for minutes; report every 15s so it never looks hung
+        if elapsed - last[0] >= 15 or last[0] == 0.0:
+            last[0] = elapsed
+            print(f"\r   {status} … {elapsed:.0f}s", end="", flush=True)
+
     out = []
     for jid in job_ids:
-        job = hf.wait(jid, timeout=a.wait_timeout)
+        job = hf.wait(jid, timeout=a.wait_timeout, on_progress=_tick)
+        print("\r" + " " * 40 + "\r", end="")
         urls = hf.result_urls(job)
         out.append({"job_id": jid, "results": urls})
         print(f"  {jid} -> {urls.get('raw', '(no url)')}")
@@ -195,7 +204,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="opt OUT of the free 'unlimited' path and spend credits instead "
                         "(use_unlim defaults to true)")
     c.add_argument("--wait", action="store_true", help="block until finished")
-    c.add_argument("--wait-timeout", type=float, default=300.0)
+    c.add_argument("--wait-timeout", type=float, default=900.0,
+                   help="seconds to wait for a job (free jobs queue; default 900)")
     c.add_argument("-o", "--output", help="save the image(s) here (file or directory)")
     c.set_defaults(func=cmd_create)
 
@@ -205,7 +215,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     gw = gsub.add_parser("wait", help="poll a job until it finishes")
     gw.add_argument("job_id")
-    gw.add_argument("--wait-timeout", type=float, default=300.0)
+    gw.add_argument("--wait-timeout", type=float, default=900.0)
     gw.add_argument("-o", "--output")
     gw.set_defaults(func=cmd_wait)
 

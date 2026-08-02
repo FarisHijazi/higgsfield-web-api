@@ -75,7 +75,7 @@ class GenerateRequest(BaseModel):
     style_id: str | None = None
     extra_params: dict | None = None
     wait: bool = Field(True, description="block until the images are ready")
-    timeout: float = 300.0
+    timeout: float = 900.0
 
 
 # ---- routes ---------------------------------------------------------------
@@ -128,7 +128,7 @@ def get_job(job_id: str) -> dict:
 
 
 @app.post("/v1/jobs/{job_id}/wait")
-def wait_job(job_id: str, timeout: float = Body(300.0, embed=True)) -> dict:
+def wait_job(job_id: str, timeout: float = Body(900.0, embed=True)) -> dict:
     hf = client()
     job = hf.wait(job_id, timeout=timeout)
     return {"job_id": job_id, "status": job.get("status"), "results": hf.result_urls(job)}

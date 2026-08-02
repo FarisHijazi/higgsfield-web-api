@@ -1,0 +1,18 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Never commit credentials or generated media
+clerk_cookies.json
+*.cookies.json
+*.png
+*.jpg
+*.jpeg
+*.webp

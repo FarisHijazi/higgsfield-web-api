@@ -156,6 +156,13 @@ higgsfield-web-api-cli generate get  <job_id>          # check later
 higgsfield-web-api-cli generate wait <job_id> -o out.png
 ```
 
+## How it was built
+
+[`docs/BUILD-NOTES.md`](docs/BUILD-NOTES.md) — the reverse-engineering notes: the captured call
+graph, why the transport needs `curl_cffi` + Chrome client hints, why reference upload is three
+calls and not two, the measured queue timings, and the things that look like bugs but aren't.
+Read it before changing the transport, the upload flow or the timeouts.
+
 ## Known limits
 
 - **Human verification (`turnstile_required`).** Generating too fast trips an anti-bot gate

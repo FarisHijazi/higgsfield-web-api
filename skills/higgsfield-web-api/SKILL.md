@@ -48,9 +48,9 @@ Pass a local file to `--image`; it is uploaded automatically. Repeatable (up to 
 
 ```bash
 $GW higgsfield-web-api-cli generate create nano_banana \
-    --prompt "same woman, same face and same black embroidered abaya, sitting in a modern \
-Riyadh cafe, candid vertical smartphone photo, natural window light" \
-    --aspect-ratio 9:16 --image ./persona-summer-hijabi.png --wait -o /tmp/cafe.png
+    --prompt "same woman, same face and same outfit, sitting in a modern cafe, \
+candid vertical smartphone photo, natural window light" \
+    --aspect-ratio 9:16 --image ./persona.png --wait -o /tmp/cafe.png
 ```
 
 Verified: identity, clothing and styling carry over faithfully — this is a working

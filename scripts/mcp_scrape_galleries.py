@@ -65,7 +65,7 @@ def call(tool: str, args: dict) -> dict:
 
 
 def safe(pid: str) -> str:
-    return pid.replace("/", "_").replace(":", "_").strip("_")
+    return str(pid).replace("/", "_").replace(":", "_").strip("_")
 
 
 def items_of(sc: dict, text: str = "") -> list[dict]:

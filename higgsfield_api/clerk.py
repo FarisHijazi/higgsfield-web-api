@@ -78,6 +78,18 @@ def _jwt_exp(jwt: str) -> float:
         return 0.0
 
 
+def _cli_token() -> str | None:
+    """The official Higgsfield CLI's access token, if `higgs` is installed and logged in."""
+    import shutil
+    import subprocess
+    exe = shutil.which("higgs") or shutil.which("higgsfield")
+    if not exe:
+        return None
+    r = subprocess.run([exe, "auth", "token"], capture_output=True, text=True, timeout=30)
+    tok = r.stdout.strip()
+    return tok if r.returncode == 0 and tok and " " not in tok else None
+
+
 class ClerkAuth:
     """Holds a Clerk cookie jar and mints/caches session JWTs from it."""
 
@@ -128,10 +140,21 @@ class ClerkAuth:
         return sid
 
     def get_token(self, force: bool = False) -> str:
-        """A valid Clerk session JWT, cached until ~10s before it expires."""
+        """A valid bearer for fnf-api-gw, cached until ~10s before it expires: a Clerk session JWT minted from the
+        cookie jar, or, when there are no usable cookies, the official CLI's OAuth token (`higgs auth token`), which the
+        web backend also accepts (verified 2026-10-27: /fnf/user 200 with has_unlim)."""
         now = time.time()
         if not force and self._token and now < self._token_exp - 10:
             return self._token
+        try:
+            return self._cookie_token(now)
+        except AuthError:
+            if tok := _cli_token():
+                self._token, self._token_exp = tok, now + 300  # the CLI refreshes it; re-ask every 5 min
+                return tok
+            raise
+
+    def _cookie_token(self, now: float) -> str:
         if not self.has_cookies():
             raise AuthError(
                 "no Clerk cookies loaded — run `higgsfield-web-api-cli bootstrap` "

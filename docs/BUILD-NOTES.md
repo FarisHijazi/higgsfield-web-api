@@ -126,3 +126,19 @@ whole batch at once is exactly what trips it.
   preserved; every server route including multipart `/v1/upload` and `/files/{job_id}.png`;
   `uvx --from git+https://…` install straight from GitHub.
 - Timing measured end to end (`tests/timing.py`); output verified as a real `PNG 768 x 1344`.
+
+## MCP server (2026-10-27)
+
+`https://mcp.higgsfield.ai/mcp` accepts the **CLI's own token** (`higgs auth token`) as a Bearer, so no separate
+OAuth consent is needed. `scripts/mcp_probe.py` (`dump`, `call TOOL json`) and `scripts/mcp_dump_recipes.py`
+(every preset recipe + the 13 bundled workflow folders) read it with `HF_TOKEN="$(higgs auth token)"`. Both are
+read-only. Lineage: owner request to reverse-engineer Content Factory; findings live in the business repo under
+`research/content-factory/`.
+
+**The web backend accepts the CLI token too (2026-10-27).** `GET fnf-api-gw…/fnf/user` with `Bearer $(higgs auth token)`
+returns 200 with `has_unlim: true`, so `ClerkAuth.get_token()` now falls back to it when there are no usable Clerk
+cookies. A headless box with a logged-in `higgs` needs no Chrome bootstrap. It does not get past `turnstile_required`
+(an account-level human check that must be passed in a browser).
+
+Gallery scrapers: `scripts/mcp_scrape_galleries.py OUT --details --thumbs` (every MCP preset gallery, paginated) and
+`scripts/web_scrape_sitemap.py OUT` (every English page in the sitemaps).

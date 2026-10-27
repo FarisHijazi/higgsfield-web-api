@@ -50,12 +50,22 @@ http = httpx.Client(timeout=60, follow_redirects=True)
 
 
 def call(tool: str, args: dict) -> dict:
+    r = {}
     for attempt in range(3):
-        r = s.rpc("tools/call", {"name": tool, "arguments": args}).get("result") or {}
+        try:
+            r = s.rpc("tools/call", {"name": tool, "arguments": args}).get("result") or {}
+        except (ValueError, httpx.HTTPError) as e:
+            print(f"  {tool} {args} attempt {attempt}: {e}", flush=True)
+            time.sleep(2 * (attempt + 1))
+            continue
         if r.get("structuredContent") is not None or not r.get("isError"):
             return r
         time.sleep(2 * (attempt + 1))
     return r
+
+
+def safe(pid: str) -> str:
+    return pid.replace("/", "_").replace(":", "_").strip("_")
 
 
 def items_of(sc: dict, text: str = "") -> list[dict]:
@@ -112,7 +122,7 @@ for name, (tool, fixed, size, detail_tool) in GALLERIES.items():
         d = out / "details" / name
         d.mkdir(parents=True, exist_ok=True)
         for pid in filter(None, ids):
-            p = d / f"{pid.replace('/', '_').strip('_')}.json"
+            p = d / f"{safe(pid)}.json"
             if p.exists():
                 continue
             a = {"preset": pid} if detail_tool == "get_preset_instructions" else {"preset_id": pid}
@@ -128,7 +138,7 @@ for name, (tool, fixed, size, detail_tool) in GALLERIES.items():
             pid = r.get("id") or r.get("preset_id")
             if not (pid and url.startswith("http")) or url.endswith((".mp4", ".webm", ".mov")):
                 continue
-            p = t / f"{pid}{pathlib.Path(url.split('?')[0]).suffix or '.img'}"
+            p = t / f"{safe(pid)}{pathlib.Path(url.split('?')[0]).suffix or '.img'}"
             if p.exists():
                 continue
             try:

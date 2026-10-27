@@ -96,7 +96,11 @@ class Session:
             return r
         body = r.text
         if "text/event-stream" in r.headers.get("content-type", ""):
-            body = "\n".join(l[5:].strip() for l in body.splitlines() if l.startswith("data:"))
+            parts = [l[5:].removeprefix(" ") for l in body.splitlines() if l.startswith("data:")]
+            try:
+                return json.loads("\n".join(parts))
+            except json.JSONDecodeError:  # big payloads arrive split mid-string across data: lines
+                return json.loads("".join(parts))
         return json.loads(body)
 
 

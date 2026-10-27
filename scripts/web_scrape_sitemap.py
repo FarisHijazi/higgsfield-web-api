@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 ROOT = "https://higgsfield.ai"
 out = pathlib.Path(sys.argv[1])
 only = next((a.split("=", 1)[1].split(",") for a in sys.argv if a.startswith("--only=")), None)
-http = httpx.Client(timeout=30, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (research scraper)"})
+http = httpx.Client(timeout=30, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (research scraper)", "Accept-Language": "en-US,en;q=0.9"})
 
 
 def locs(xml_url: str) -> list[str]:
@@ -37,10 +37,10 @@ def section_of(url: str) -> str:
 
 pages = []
 for sm in locs(f"{ROOT}/sitemap.xml"):
-    if re.search(r"sitemap-(es|ko)\.xml", sm) or "help-center" in sm:
+    if re.search(r"sitemap-[a-z]{2}\.xml", sm) or "help-center" in sm:
         continue
     pages += locs(sm)
-pages = [u for u in dict.fromkeys(pages) if not re.search(r"higgsfield\.ai/(es|ko)(/|$)", u)]
+pages = [u for u in dict.fromkeys(pages) if not re.search(r"higgsfield\.ai/[a-z]{2}(/|$)", u)]
 if only:
     pages = [u for u in pages if section_of(u) in only]
 print(len(pages), "pages", flush=True)
